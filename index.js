@@ -5,6 +5,7 @@ const sqlite3 = require("sqlite3");
 // const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const connectDB = require("./db/connect");
 
 const app = express();
 app.use(express.json());
@@ -26,6 +27,9 @@ const JWT_SECRET = "your_secret_key_change_in_production";
 // ---------------- DB INIT ----------------
 const initializeDBAndServer = async () => {
   try {
+    await connectDB();
+
+    
     db = await open({
       filename: dbPath,
       driver: sqlite3.Database,
