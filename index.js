@@ -10,8 +10,10 @@ const app = express();
 app.use(express.json());
 
 import cors from "cors";
+import express from "express";
 
-// ✅ Allow local dev AND deployed frontend
+const app = express();
+
 app.use(cors({
   origin: [
     "http://localhost:5173",              // local dev
@@ -19,6 +21,9 @@ app.use(cors({
   ],
   credentials: true
 }));
+
+// rest of your routes...
+
 
 const dbPath = path.join(__dirname, "banklending.db");
 let db = null;
