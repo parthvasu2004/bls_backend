@@ -2,21 +2,20 @@ const express = require("express");
 const path = require("path");
 const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
-const cors = require("cors");
+// const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const app = express();
 app.use(express.json());
 
+const cors = require("cors");
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://bls-frontend-ten.vercel.app"
-  ],
+  origin: "https://bls-frontend-ten.vercel.app",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
+
 
 const dbPath = path.join(__dirname, "banklending.db");
 let db = null;
