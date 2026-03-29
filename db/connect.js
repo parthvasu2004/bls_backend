@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 
-uri = "mongodb+srv://parthvasu2004_db_user:<WjhlN0EoMBLpAuqJ>@blsapi.lcoaoc0.mongodb.net/blsapi?appName=blsapi";
+uri = "mongodb+srv://parthvasu2004_db_user:<WjhlN0EoMBLpAuqJ>@blsapi.lcoaoc0.mongodb.net/";
+
+// uri = "mongodb+srv://parthvasu2004_db_user:<WjhlN0EoMBLpAuqJ>@blsapi.lcoaoc0.mongodb.net/blsapi?appName=blsapi";
 
 const connectDB = () => {
     return mongoose.connect(uri, {
