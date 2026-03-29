@@ -9,8 +9,14 @@ const jwt = require("jsonwebtoken");
 const app = express();
 app.use(express.json());
 
-// ✅ Allow frontend on 5173
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://bls-frontend-ten.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 
 const dbPath = path.join(__dirname, "banklending.db");
 let db = null;
