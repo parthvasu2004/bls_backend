@@ -9,11 +9,32 @@ const jwt = require("jsonwebtoken");
 const app = express();
 app.use(express.json());
 
+// api/index.js
 import express from "express";
 import cors from "cors";
 import serverless from "serverless-http";
-app.use(cors({ origin: "http://localhost:5173" }));
 
+const app = express();
+
+app.use(cors({
+  origin: [
+    "http://localhost:5173",              // local dev
+    "https://bls-frontend-ten.vercel.app" // deployed frontend
+  ],
+  credentials: true
+}));
+
+app.use(express.json());
+
+// Example route
+app.post("/api/register", (req, res) => {
+  const { username, password } = req.body;
+  // your registration logic here
+  res.json({ message: "Registered successfully!" });
+});
+
+// Export as serverless function
+export const handler = serverless(app);
 
 // rest of your routes...
 
