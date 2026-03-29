@@ -1,8 +1,18 @@
 import { Component } from "react";
 import { Navigate } from "react-router-dom";
+import Dashboard from "./Dashboard";
+import CreditScore from "./CreditScore";
+import {
+  generateLoanAgreement,
+  generatePaymentReceipt,
+  generateLoanStatement,
+  generateAmortizationSchedule,
+} from "../utils/pdfGenerator";
 import "../App.css";
 
 const optionList = [
+  { optionId: "dashboard", displayText: "📊 Dashboard & Analytics" },
+  { optionId: "credit-score", displayText: "💳 Credit Score" },
   { optionId: "create-loan", displayText: "Create A New Loan" },
   { optionId: "loan-payment", displayText: "Loan Payment" },
   { optionId: "loan-detail", displayText: "View Loan Details and Payment History" },
@@ -25,13 +35,13 @@ class Home extends Component {
     paymentAmount: "",
     userData: null,
     shouldLogout: false,
+    copiedId: null,
   };
 
   componentDidMount() {
     this.fetchUserData();
   }
 
-  // Fetch current user data
   fetchUserData = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -58,6 +68,17 @@ class Home extends Component {
     this.setState({ shouldLogout: true });
   };
 
+  copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      this.setState({ copiedId: text });
+      setTimeout(() => {
+        this.setState({ copiedId: null });
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+    });
+  };
+
   onChangeOptions = (event) => {
     this.setState({
       activeOptionId: event.target.value,
@@ -74,7 +95,7 @@ class Home extends Component {
     });
   };
 
-  // Helper function to get auth headers
+  
   getAuthHeaders = () => {
     const token = localStorage.getItem("token");
     return {
@@ -83,7 +104,7 @@ class Home extends Component {
     };
   };
 
-  // Handling API 1: Create Loan
+
   handleCreateLoanSubmit = async (event) => {
     event.preventDefault();
     this.setState({
@@ -107,24 +128,24 @@ class Home extends Component {
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
-        this.setState({ 
-          backendResult: { error: result.error }, 
-          firstOption: true 
+        this.setState({
+          backendResult: { error: result.error },
+          firstOption: true,
         });
       } else {
         this.setState({ backendResult: result, firstOption: true });
       }
-    } catch  {
-      this.setState({ 
-        backendResult: { error: "Network error" }, 
-        firstOption: true 
+    } catch {
+      this.setState({
+        backendResult: { error: "Network error" },
+        firstOption: true,
       });
     }
   };
 
-  // Handling API 2: Loan Payment
+
   handleLoanPaymentSubmit = async (event) => {
     event.preventDefault();
     this.setState({
@@ -156,7 +177,7 @@ class Home extends Component {
 
       if (!response.ok) {
         this.setState({
-          backendResult: { error: result.error || "Payment failed" },
+          backendResult: { error: result.error || "Payment failed", ...result },
           secondOption: true,
         });
       } else {
@@ -170,7 +191,7 @@ class Home extends Component {
     }
   };
 
-  // Handling API 3: View Loan Details
+
   handleViewLoanDetailsSubmit = async (event) => {
     event.preventDefault();
     this.setState({
@@ -201,7 +222,7 @@ class Home extends Component {
       } else {
         this.setState({ backendResult: result, thirdOption: true });
       }
-    } catch  {
+    } catch {
       this.setState({
         backendResult: { error: "Network error" },
         thirdOption: true,
@@ -209,7 +230,7 @@ class Home extends Component {
     }
   };
 
-  // Handling API 4: View All Loans
+
   handleViewAllLoansSubmit = async (event) => {
     event.preventDefault();
     this.setState({
@@ -237,7 +258,7 @@ class Home extends Component {
       } else {
         this.setState({ backendResult: result, fourthOption: true });
       }
-    } catch  {
+    } catch {
       this.setState({
         backendResult: { error: "Network error" },
         fourthOption: true,
@@ -245,7 +266,7 @@ class Home extends Component {
     }
   };
 
-  // Fetch EMI Amount
+
   fetchEmiAmount = async (loanId) => {
     try {
       const response = await fetch(
@@ -308,7 +329,7 @@ class Home extends Component {
     });
   };
 
-  // FORMS
+
   renderCreateLoanForm = () => (
     <form onSubmit={this.handleCreateLoanSubmit}>
       <div className="label-input-div">
@@ -420,9 +441,9 @@ class Home extends Component {
     </form>
   );
 
-  // RESULTS
+
   renderCreateLoanFormResult = () => {
-    const { backendResult } = this.state;
+    const { backendResult, copiedId, userData } = this.state;
 
     if (backendResult.error) {
       return (
@@ -439,16 +460,55 @@ class Home extends Component {
     const { loan_id, customer_id, total_amount_payable, monthly_emi } =
       backendResult;
 
+    const handleDownloadAgreement = () => {
+      const loanData = {
+        loan_id: loan_id,
+        principal_amount: Math.round(total_amount_payable / 1.14),
+        loan_period_years: 2,
+        monthly_emi: monthly_emi,
+        total_amount: total_amount_payable,
+      };
+      generateLoanAgreement(loanData, userData);
+    };
+
+    const handleDownloadAmortization = () => {
+      const loanData = {
+        loan_id: loan_id,
+        principal_amount: Math.round(total_amount_payable / 1.14),
+        loan_period_years: 2,
+        monthly_emi: monthly_emi,
+      };
+      generateAmortizationSchedule(loanData, userData);
+    };
+
     return (
       <div className="result-card">
         <h3 className="result-title">Result</h3>
         <div className="result-row">
           <span className="label">Loan ID</span>
-          <span className="value">{loan_id}</span>
+          <span className="value copy-container">
+            {loan_id}
+            <button
+              className="copy-btn"
+              onClick={() => this.copyToClipboard(loan_id, "loan")}
+              title="Copy Loan ID"
+            >
+              {copiedId === loan_id ? "✓" : "📋"}
+            </button>
+          </span>
         </div>
         <div className="result-row">
           <span className="label">Customer ID</span>
-          <span className="value">{customer_id}</span>
+          <span className="value copy-container">
+            {customer_id}
+            <button
+              className="copy-btn"
+              onClick={() => this.copyToClipboard(customer_id, "customer")}
+              title="Copy Customer ID"
+            >
+              {copiedId === customer_id ? "✓" : "📋"}
+            </button>
+          </span>
         </div>
         <div className="result-row">
           <span className="label">Total Amount Payable</span>
@@ -458,61 +518,189 @@ class Home extends Component {
           <span className="label">Monthly EMI</span>
           <span className="value bold">{monthly_emi}</span>
         </div>
+
+        <div className="pdf-download-section">
+          <h4>📄 Download Documents</h4>
+          <div className="pdf-buttons">
+            <button className="pdf-btn" onClick={handleDownloadAgreement}>
+              📋 Download Loan Agreement
+            </button>
+            <button className="pdf-btn" onClick={handleDownloadAmortization}>
+              📊 Download Amortization Schedule
+            </button>
+          </div>
+        </div>
       </div>
     );
   };
 
   renderLoanPaymentFormResult = () => {
-    const { backendResult } = this.state;
+    const { backendResult, copiedId, userData } = this.state;
 
     if (backendResult.error) {
       return (
         <div className="result-card">
-          <h3 className="result-title">Error</h3>
+          <h3 className="result-title">
+            {backendResult.status === "COMPLETED" ? "🎉 Loan Completed!" : "Error"}
+          </h3>
           <div className="result-row">
-            <span className="label">Error Message</span>
-            <span className="value">{backendResult.error}</span>
+            <span className="label">Message</span>
+            <span className="value">{backendResult.message || backendResult.error}</span>
           </div>
+          {backendResult.status === "COMPLETED" && (
+            <>
+              <div className="result-row">
+                <span className="label">Loan ID</span>
+                <span className="value copy-container">
+                  {backendResult.loan_id}
+                  <button
+                    className="copy-btn"
+                    onClick={() => this.copyToClipboard(backendResult.loan_id, "loan")}
+                    title="Copy Loan ID"
+                  >
+                    {copiedId === backendResult.loan_id ? "✓" : "📋"}
+                  </button>
+                </span>
+              </div>
+              <div className="result-row">
+                <span className="label">Total Amount</span>
+                <span className="value bold">₹{backendResult.total_amount}</span>
+              </div>
+              <div className="result-row">
+                <span className="label">Total Paid</span>
+                <span className="value bold">₹{backendResult.total_paid}</span>
+              </div>
+              <div className="completion-message">
+                ✨ Thank you for completing your loan! Your account is now clear. ✨
+              </div>
+            </>
+          )}
+          {backendResult.remaining_balance !== undefined && (
+            <div className="result-row">
+              <span className="label">Remaining Balance</span>
+              <span className="value bold">₹{backendResult.remaining_balance}</span>
+            </div>
+          )}
         </div>
       );
     }
 
-    const { transaction_id, loan_id, message, remaining_balance, emis_left } =
-      backendResult;
+    const {
+      transaction_id,
+      loan_id,
+      message,
+      remaining_balance,
+      emis_left,
+      is_completed,
+      loan_status,
+    } = backendResult;
+
+    const handleDownloadReceipt = () => {
+      const paymentData = {
+        transaction_id: transaction_id,
+        loan_id: loan_id,
+        amount: backendResult.amount || 0,
+        type: backendResult.transaction_type || "EMI",
+        date: new Date(),
+        remaining_balance: remaining_balance,
+        emis_left: emis_left,
+      };
+      generatePaymentReceipt(paymentData, {}, userData);
+    };
 
     return (
-      <div className="result-card">
-        <h3 className="result-title">Result</h3>
+      <div className={`result-card ${is_completed ? "completed-loan" : ""}`}>
+        <h3 className="result-title">
+          {is_completed ? "🎉 Loan Fully Paid!" : "Result"}
+        </h3>
+
+        {is_completed && (
+          <div className="celebration-banner">
+            <div className="celebration-icon">🎊</div>
+            <div className="celebration-text">
+              <h4>Congratulations!</h4>
+              <p>You have successfully completed your loan payment!</p>
+            </div>
+            <div className="celebration-icon">🎊</div>
+          </div>
+        )}
+
         <div className="result-row">
           <span className="label">Transaction ID</span>
-          <span className="value">{transaction_id || "N/A"}</span>
+          <span className="value copy-container">
+            {transaction_id || "N/A"}
+            {transaction_id && (
+              <button
+                className="copy-btn"
+                onClick={() => this.copyToClipboard(transaction_id, "transaction")}
+                title="Copy Transaction ID"
+              >
+                {copiedId === transaction_id ? "✓" : "📋"}
+              </button>
+            )}
+          </span>
         </div>
         <div className="result-row">
           <span className="label">Loan ID</span>
-          <span className="value">{loan_id || "N/A"}</span>
+          <span className="value copy-container">
+            {loan_id || "N/A"}
+            {loan_id && (
+              <button
+                className="copy-btn"
+                onClick={() => this.copyToClipboard(loan_id, "loan")}
+                title="Copy Loan ID"
+              >
+                {copiedId === loan_id ? "✓" : "📋"}
+              </button>
+            )}
+          </span>
         </div>
         <div className="result-row">
           <span className="label">Remaining Balance</span>
-          <span className="value bold">
-            {remaining_balance !== undefined ? remaining_balance : "N/A"}
+          <span
+            className={`value bold ${remaining_balance === 0 ? "zero-balance" : ""}`}
+          >
+            ₹{remaining_balance !== undefined ? remaining_balance : "N/A"}
           </span>
         </div>
         <div className="result-row">
           <span className="label">EMI'S Left</span>
-          <span className="value bold">
+          <span className={`value bold ${emis_left === 0 ? "zero-emis" : ""}`}>
             {emis_left !== undefined ? emis_left : "N/A"}
+          </span>
+        </div>
+        <div className="result-row">
+          <span className="label">Status</span>
+          <span className={`value bold status-${loan_status?.toLowerCase()}`}>
+            {loan_status || "ACTIVE"}
           </span>
         </div>
         <div className="result-row">
           <span className="label">Message</span>
           <span className="value bold">{message || "N/A"}</span>
         </div>
+
+        {is_completed && (
+          <div className="completion-footer">
+            <p>✨ Your dedication to completing this loan is commendable! ✨</p>
+            <p>Feel free to apply for new loans anytime.</p>
+          </div>
+        )}
+
+        <div className="pdf-download-section">
+          <h4>📄 Download Receipt</h4>
+          <div className="pdf-buttons">
+            <button className="pdf-btn" onClick={handleDownloadReceipt}>
+              🧾 Download Payment Receipt
+            </button>
+          </div>
+        </div>
       </div>
     );
   };
 
   renderViewLoanDetailsFormResult = () => {
-    const { backendResult } = this.state;
+    const { backendResult, copiedId, userData } = this.state;
 
     if (backendResult.error) {
       return (
@@ -538,18 +726,68 @@ class Home extends Component {
       transactions,
     } = backendResult;
 
+const handleDownloadStatement = () => {
+  console.log("===== BUTTON CLICKED =====");
+  console.log("userData:", userData);
+  console.log("transactions:", transactions);
+  console.log("loan_id:", loan_id);
+  console.log("principal:", principal);
+  
+  try {
+    const loanData = {
+      loan_id: loan_id,
+      principal_amount: principal,
+      total_amount: total_amount,
+      monthly_emi: monthly_emi,
+      total_paid: total_paid,
+      balance_amount: balance_amount,
+      emis_left: emis_left,
+      created_at: new Date(),
+      loan_period_years: Math.ceil((total_amount / monthly_emi) / 12),
+    };
+    
+    console.log("loanData created:", loanData);
+    console.log("Calling generateLoanStatement...");
+    
+    generateLoanStatement(loanData, transactions, userData);
+    
+    console.log("generateLoanStatement called successfully!");
+  } catch (error) {
+    console.error("ERROR:", error);
+    console.error("Error stack:", error.stack);
+  }
+};
+
     return (
       <div className="result-card">
         <h3 className="result-title">Result</h3>
 
         <div className="result-row">
           <span className="label">Loan ID</span>
-          <span className="value">{loan_id}</span>
+          <span className="value copy-container">
+            {loan_id}
+            <button
+              className="copy-btn"
+              onClick={() => this.copyToClipboard(loan_id, "loan")}
+              title="Copy Loan ID"
+            >
+              {copiedId === loan_id ? "✓" : "📋"}
+            </button>
+          </span>
         </div>
 
         <div className="result-row">
           <span className="label">Customer ID</span>
-          <span className="value">{customer_id}</span>
+          <span className="value copy-container">
+            {customer_id}
+            <button
+              className="copy-btn"
+              onClick={() => this.copyToClipboard(customer_id, "customer")}
+              title="Copy Customer ID"
+            >
+              {copiedId === customer_id ? "✓" : "📋"}
+            </button>
+          </span>
         </div>
 
         <div className="result-row">
@@ -596,7 +834,20 @@ class Home extends Component {
             <tbody>
               {transactions.map((eachTran) => (
                 <tr key={eachTran.transaction_id}>
-                  <td>{eachTran.transaction_id}</td>
+                  <td>
+                    <span className="copy-container">
+                      {eachTran.transaction_id}
+                      <button
+                        className="copy-btn-small"
+                        onClick={() =>
+                          this.copyToClipboard(eachTran.transaction_id, "transaction")
+                        }
+                        title="Copy Transaction ID"
+                      >
+                        {copiedId === eachTran.transaction_id ? "✓" : "📋"}
+                      </button>
+                    </span>
+                  </td>
                   <td>{eachTran.type}</td>
                   <td className="status paid">{eachTran.amount}</td>
                   <td>{eachTran.date}</td>
@@ -605,12 +856,21 @@ class Home extends Component {
             </tbody>
           </table>
         </div>
+
+        <div className="pdf-download-section">
+          <h4>📄 Download Statement</h4>
+          <div className="pdf-buttons">
+            <button className="pdf-btn" onClick={handleDownloadStatement}>
+              📑 Download Loan Statement
+            </button>
+          </div>
+        </div>
       </div>
     );
   };
 
   renderAllLoansForCustomerFormResult = () => {
-    const { backendResult } = this.state;
+    const { backendResult, copiedId } = this.state;
 
     if (backendResult.error) {
       return (
@@ -643,7 +903,17 @@ class Home extends Component {
 
         <div className="overview-info">
           <span className="info-left">
-            Customer ID : <strong>{customer_id}</strong>
+            Customer ID :
+            <strong className="copy-container">
+              {customer_id}
+              <button
+                className="copy-btn"
+                onClick={() => this.copyToClipboard(customer_id, "customer")}
+                title="Copy Customer ID"
+              >
+                {copiedId === customer_id ? "✓" : "📋"}
+              </button>
+            </strong>
           </span>
           <span className="info-right">
             Total Loans <strong>{total_loans}</strong>
@@ -652,7 +922,16 @@ class Home extends Component {
 
         {loans.map((eachLoan) => (
           <div className="loan-card purple" key={eachLoan.loan_id}>
-            <div className="loan-id">{eachLoan.loan_id}</div>
+            <div className="loan-id copy-container">
+              {eachLoan.loan_id}
+              <button
+                className="copy-btn"
+                onClick={() => this.copyToClipboard(eachLoan.loan_id, "loan")}
+                title="Copy Loan ID"
+              >
+                {copiedId === eachLoan.loan_id ? "✓" : "📋"}
+              </button>
+            </div>
             <div className="loan-row">
               <span>Principal</span>
               <span>{eachLoan.principal}</span>
@@ -701,11 +980,13 @@ class Home extends Component {
     return (
       <div className="container">
         <div className="header-section">
-          <h1 className="main">BANK LENDING SYSTEM</h1>
+          <h1 className="main">BANK LENDING MANAGEMENT SYSTEM</h1>
           {userData && (
             <div className="user-info">
               <span>Welcome, {userData.name}</span>
-              <span className="customer-id">ID: {userData.customer_id}</span>
+              <span className="customer-id copy-container">
+                ID: {userData.customer_id}
+              </span>
               <button className="logout-btn" onClick={this.handleLogout}>
                 Logout
               </button>
@@ -725,6 +1006,8 @@ class Home extends Component {
           ))}
         </select>
 
+        {activeOptionId === "dashboard" && <Dashboard />}
+        {activeOptionId === "credit-score" && <CreditScore />}
         {activeOptionId === "create-loan" && this.renderCreateLoanForm()}
         {activeOptionId === "loan-payment" && this.renderLoanPaymentForm()}
         {activeOptionId === "loan-detail" && this.renderViewLoanDetailsForm()}

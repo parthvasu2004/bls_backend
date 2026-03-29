@@ -25,7 +25,7 @@ body {
   border-radius: 15px;
   box-shadow: 0 10px 50px rgba(0, 0, 0, 0.2);
   width: 100%;
-  min-width: 650px;
+  min-width: 600px;
 }
 
 .auth-container h2 {
@@ -148,6 +148,235 @@ body {
   cursor: not-allowed;
 }
 
+/* Copy Button Styles */
+.copy-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.copy-btn, .copy-btn-inline, .copy-btn-small {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  padding: 5px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copy-btn:hover, .copy-btn-inline:hover, .copy-btn-small:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+}
+
+.copy-btn:active, .copy-btn-inline:active, .copy-btn-small:active {
+  transform: scale(0.95);
+}
+
+.copy-btn-inline {
+  padding: 3px 8px;
+  font-size: 12px;
+  margin-left: 5px;
+}
+
+.copy-btn-small {
+  padding: 3px 6px;
+  font-size: 11px;
+  margin-left: 5px;
+}
+
+.loan-table .copy-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.loan-id.copy-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Loan Completion Celebration Styles */
+.result-card.completed-loan {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-left: 5px solid #28a745;
+}
+
+.celebration-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+  border-radius: 10px;
+  margin-bottom: 20px;
+  animation: celebrationPulse 2s infinite;
+}
+
+.celebration-icon {
+  font-size: 48px;
+  animation: bounce 1s infinite;
+}
+
+.celebration-text {
+  text-align: center;
+}
+
+.celebration-text h4 {
+  margin: 0 0 5px 0;
+  color: #155724;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.celebration-text p {
+  margin: 0;
+  color: #155724;
+  font-size: 16px;
+}
+
+.completion-message {
+  text-align: center;
+  padding: 15px;
+  background: #d4edda;
+  border-radius: 8px;
+  margin-top: 15px;
+  color: #155724;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.completion-footer {
+  text-align: center;
+  padding: 15px;
+  background: #fff3cd;
+  border-radius: 8px;
+  margin-top: 15px;
+  border: 2px dashed #ffc107;
+}
+
+.completion-footer p {
+  margin: 5px 0;
+  color: #856404;
+  font-size: 14px;
+}
+
+.zero-balance {
+  color: #28a745 !important;
+  font-size: 24px !important;
+}
+
+.zero-emis {
+  color: #28a745 !important;
+}
+
+.status-closed {
+  color: #28a745 !important;
+  background: #d4edda;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.status-active {
+  color: #667eea !important;
+  background: #e3f2fd;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+/* Animations */
+@keyframes celebrationPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* PDF Download Section */
+.pdf-download-section {
+  margin-top: 25px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 12px;
+  border: 2px dashed #667eea;
+}
+
+.pdf-download-section h4 {
+  margin: 0 0 15px 0;
+  color: #667eea;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pdf-btn {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.pdf-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #5568d3 0%, #663a8e 100%);
+}
+
+.pdf-btn:active {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .pdf-buttons {
+    flex-direction: column;
+  }
+  
+  .pdf-btn {
+    width: 100%;
+    min-width: unset;
+  }
+}
+
 .message {
   padding: 12px;
   border-radius: 8px;
@@ -170,7 +399,7 @@ body {
 
 /* Home/Container Styles */
 .container {
-  min-width: 80vw;
+  min-width: 95vw;
   margin: 30px auto;
   padding: 30px;
   background: white;
