@@ -12,18 +12,7 @@ app.use(express.json());
 import express from "express";
 import cors from "cors";
 import serverless from "serverless-http";
-
-const app = express();
-
-app.use(cors({ origin: ["http://localhost:5173", "https://bls-frontend-ten.vercel.app"] }));
-app.use(express.json());
-
-app.post("/api/register", (req, res) => {
-  // registration logic
-  res.json({ message: "Registered!" });
-});
-
-export const handler = serverless(app);
+app.use(cors({ origin: "http://localhost:5173" }));
 
 
 // rest of your routes...
