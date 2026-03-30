@@ -157,5 +157,188 @@ app.get("/auth/me", authenticateToken, async (req, res) => {
   }
 });
 
+
+
+const loanSchema = new mongoose.Schema({
+  loan_id: String,
+  customer_id: Number,
+  principal_amount: Number,
+  total_amount: Number,
+  interest_rate: Number,
+  loan_period_years: Number,
+  monthly_emi: Number,
+  status: {
+    type: String,
+    default: "ACTIVE"
+  },
+  created_at: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const Loan = mongoose.model("Loan", loanSchema);
+
+const transactionSchema = new mongoose.Schema({
+  transaction_id: String,
+  loan_id: String,
+  amount: Number,
+  type: String,
+  date: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const Transaction = mongoose.model("Transaction", transactionSchema);
+
+app.post("/loans", authenticateToken, async (req, res) => {
+  const { loan_amount, loan_period_years } = req.body;
+  const customer_id = req.user.customer_id;
+
+  try {
+    const interest_rate = 7;
+
+    const total_interest =
+      loan_amount * loan_period_years * (interest_rate / 100);
+
+    const total_amount = loan_amount + total_interest;
+
+    const monthly_emi = Number(
+      (total_amount / (loan_period_years * 12)).toFixed(2)
+    );
+
+    const loan_id = "LN" + Date.now();
+
+    const loan = new Loan({
+      loan_id,
+      customer_id,
+      principal_amount: loan_amount,
+      total_amount,
+      interest_rate,
+      loan_period_years,
+      monthly_emi
+    });
+
+    await loan.save();
+
+    res.send({
+      loan_id,
+      total_amount,
+      monthly_emi
+    });
+
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+app.post("/loans/:loan_id/payments", authenticateToken, async (req, res) => {
+  const { loan_id } = req.params;
+  const { amount, transaction_type } = req.body;
+
+  try {
+    const loan = await Loan.findOne({ loan_id });
+
+    if (!loan) {
+      return res.status(404).send({ error: "Loan not found" });
+    }
+
+    const transactions = await Transaction.find({ loan_id });
+
+    const total_paid = transactions.reduce((sum, t) => sum + t.amount, 0);
+
+    const remaining = loan.total_amount - total_paid;
+
+    if (remaining <= 0) {
+      return res.status(400).send({ error: "Loan already paid" });
+    }
+
+    const transaction_id = "PMT" + Date.now();
+
+    const newTransaction = new Transaction({
+      transaction_id,
+      loan_id,
+      amount,
+      type: transaction_type
+    });
+
+    await newTransaction.save();
+
+    const new_total_paid = total_paid + amount;
+    const new_remaining = loan.total_amount - new_total_paid;
+
+    res.send({
+      transaction_id,
+      remaining_balance: new_remaining
+    });
+
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+app.get("/dashboard/analytics", authenticateToken, async (req, res) => {
+  const customer_id = req.user.customer_id;
+
+  try {
+    const loans = await Loan.find({ customer_id });
+
+    if (loans.length === 0) {
+      return res.send({
+        summary: {
+          totalLoans: 0,
+          totalBorrowed: 0,
+          totalPaid: 0
+        }
+      });
+    }
+
+    let totalBorrowed = 0;
+    let totalPaid = 0;
+
+    for (const loan of loans) {
+      totalBorrowed += loan.principal_amount;
+
+      const transactions = await Transaction.find({ loan_id: loan.loan_id });
+
+      const paid = transactions.reduce((sum, t) => sum + t.amount, 0);
+
+      totalPaid += paid;
+    }
+
+    res.send({
+      summary: {
+        totalLoans: loans.length,
+        totalBorrowed,
+        totalPaid
+      }
+    });
+
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+app.get("/customers/overview", authenticateToken, async (req, res) => {
+  const customer_id = req.user.customer_id;
+
+  try {
+    const loans = await Loan.find({ customer_id });
+
+    res.send({
+      total_loans: loans.length,
+      loans
+    });
+
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+
+
+
+
 // ---------------- EXPORT FOR VERCEL ----------------
 module.exports = app;
